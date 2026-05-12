@@ -1,1 +1,246 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCQ Test</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap');
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --bg:#050a0f;--card:#0a1628;--border:#0d4f8c;
+    --blue:#0a7fe8;--green:#00ff88;--red:#ff2d55;
+    --yellow:#ffd700;--text:#e0f0ff;--dim:#5a8ab0;
+  }
+  body{background:var(--bg);color:var(--text);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;}
+  
+  /* Animated BG */
+  .bg-grid{position:fixed;inset:0;background-image:linear-gradient(rgba(10,127,232,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(10,127,232,.07) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0;}
+  .bg-glow{position:fixed;top:-30%;left:50%;transform:translateX(-50%);width:80vw;height:60vh;background:radial-gradient(ellipse,rgba(10,127,232,.15) 0%,transparent 70%);pointer-events:none;z-index:0;}
+
+  /* SCREENS */
+  .screen{position:relative;z-index:1;display:none;min-height:100vh;justify-content:center;align-items:center;padding:20px;}
+  .screen.active{display:flex;}
+
+  /* START SCREEN */
+  #startScreen{flex-direction:column;text-align:center;gap:20px;}
+  .logo{font-family:'Orbitron',monospace;font-size:clamp(2rem,6vw,4rem);font-weight:900;background:linear-gradient(135deg,var(--blue),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{filter:drop-shadow(0 0 8px rgba(10,127,232,.6));}50%{filter:drop-shadow(0 0 24px rgba(0,255,136,.8));}}
+  .subtitle{font-size:1.2rem;color:var(--dim);letter-spacing:3px;text-transform:uppercase;}
+  .stats-grid{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin:10px 0;}
+  .stat-box{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 28px;text-align:center;}
+  .stat-num{font-family:'Orbitron',monospace;font-size:2rem;color:var(--green);}
+  .stat-lbl{font-size:.85rem;color:var(--dim);text-transform:uppercase;letter-spacing:2px;}
+  .btn-start{font-family:'Orbitron',monospace;font-size:1.1rem;padding:16px 48px;background:linear-gradient(135deg,var(--blue),#0055aa);border:none;border-radius:50px;color:#fff;cursor:pointer;letter-spacing:2px;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s;}
+  .btn-start::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--green),var(--blue));opacity:0;transition:opacity .3s;}
+  .btn-start:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(10,127,232,.6);}
+  .btn-start:hover::before{opacity:1;}
+  .btn-start span{position:relative;z-index:1;}
+  .chapters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:600px;}
+  .chip{background:rgba(10,127,232,.15);border:1px solid rgba(10,127,232,.3);border-radius:20px;padding:6px 14px;font-size:.8rem;color:var(--dim);}
+
+  /* QUIZ SCREEN */
+  #quizScreen{flex-direction:column;align-items:center;padding:20px;}
+  .quiz-wrap{width:100%;max-width:760px;}
+
+  /* Progress bar */
+  .progress-bar-wrap{width:100%;height:6px;background:rgba(255,255,255,.08);border-radius:3px;margin-bottom:20px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green));border-radius:3px;transition:width .5s ease;}
+
+  /* Header row */
+  .quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
+  .q-counter{font-family:'Orbitron',monospace;font-size:.85rem;color:var(--dim);}
+  .score-live{font-family:'Orbitron',monospace;font-size:.9rem;}
+  .score-live span{color:var(--green);}
+  .timer{font-family:'Orbitron',monospace;font-size:1rem;color:var(--yellow);background:rgba(255,215,0,.1);border:1px solid rgba(255,215,0,.3);padding:6px 16px;border-radius:20px;}
+  .timer.warning{color:var(--red);border-color:rgba(255,45,85,.5);animation:blink .5s ease-in-out infinite;}
+  @keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+  /* Question card */
+  .q-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;margin-bottom:18px;position:relative;overflow:hidden;animation:slideIn .4s ease;}
+  @keyframes slideIn{from{opacity:0;transform:translateY(30px);}to{opacity:1;transform:translateY(0);}}
+  .q-tag{display:inline-block;font-size:.7rem;letter-spacing:2px;text-transform:uppercase;color:var(--blue);border:1px solid rgba(10,127,232,.4);border-radius:20px;padding:3px 12px;margin-bottom:14px;}
+  .q-text{font-size:1.15rem;font-weight:600;line-height:1.6;color:var(--text);}
+
+  /* Options */
+  .options{display:grid;gap:12px;}
+  .opt{display:flex;align-items:center;gap:14px;background:rgba(255,255,255,.03);border:1.5px solid rgba(255,255,255,.08);border-radius:12px;padding:14px 18px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+  .opt::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s;background:linear-gradient(90deg,rgba(10,127,232,.15),transparent);}
+  .opt:hover:not(.locked){border-color:var(--blue);transform:translateX(4px);}
+  .opt:hover:not(.locked)::before{opacity:1;}
+  .opt-letter{width:32px;height:32px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;font-size:.75rem;font-weight:700;flex-shrink:0;transition:all .2s;}
+  .opt-text{font-size:1rem;font-weight:600;}
+  .opt.correct{border-color:var(--green);background:rgba(0,255,136,.08);animation:correctPop .4s ease;}
+  .opt.correct .opt-letter{background:var(--green);border-color:var(--green);color:#000;}
+  @keyframes correctPop{0%{transform:scale(.98);}50%{transform:scale(1.02);}100%{transform:scale(1);}}
+  .opt.wrong{border-color:var(--red);background:rgba(255,45,85,.08);animation:shake .4s ease;}
+  .opt.wrong .opt-letter{background:var(--red);border-color:var(--red);color:#fff;}
+  @keyframes shake{0%,100%{transform:translateX(0);}25%{transform:translateX(-8px);}75%{transform:translateX(8px);}}
+  .opt.locked{cursor:default;pointer-events:none;}
+  .opt.locked:not(.correct):not(.wrong){opacity:.4;}
+
+  /* Feedback */
+  .feedback{padding:12px 18px;border-radius:10px;font-size:.95rem;font-weight:600;display:none;animation:fadeIn .3s ease;}
+  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+  .feedback.show{display:block;}
+  .feedback.correct-fb{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.3);color:var(--green);}
+  .feedback.wrong-fb{background:rgba(255,45,85,.1);border:1px solid rgba(255,45,85,.3);color:var(--red);}
+
+  /* Next btn */
+  .btn-next{font-family:'Orbitron',monospace;width:100%;padding:14px;margin-top:16px;background:linear-gradient(135deg,var(--blue),#0044aa);border:none;border-radius:12px;color:#fff;font-size:.95rem;cursor:pointer;letter-spacing:2px;display:none;transition:all .2s;position:relative;overflow:hidden;}
+  .btn-next::after{content:'▶';margin-left:8px;}
+  .btn-next.show{display:block;animation:fadeIn .3s ease;}
+  .btn-next:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(10,127,232,.4);}
+
+  /* RESULT SCREEN */
+  #resultScreen{flex-direction:column;text-align:center;align-items:center;gap:20px;padding:30px 20px;}
+  .result-title{font-family:'Orbitron',monospace;font-size:clamp(1.5rem,5vw,2.5rem);font-weight:900;}
+  .score-circle{width:160px;height:160px;border-radius:50%;background:conic-gradient(var(--green) 0%, var(--green) var(--pct), rgba(255,255,255,.06) var(--pct));display:flex;align-items:center;justify-content:center;position:relative;animation:rotateIn .6s ease;}
+  @keyframes rotateIn{from{transform:rotate(-90deg) scale(.8);opacity:0;}to{transform:rotate(0) scale(1);opacity:1;}}
+  .score-circle-inner{width:130px;height:130px;border-radius:50%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;}
+  .score-pct{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;color:var(--green);}
+  .score-frac{font-size:.9rem;color:var(--dim);}
+  .result-stats{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+  .r-stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 22px;text-align:center;}
+  .r-stat-n{font-family:'Orbitron',monospace;font-size:1.5rem;}
+  .r-stat-l{font-size:.75rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px;}
+  .r-stat.correct-s .r-stat-n{color:var(--green);}
+  .r-stat.wrong-s .r-stat-n{color:var(--red);}
+  .r-stat.skip-s .r-stat-n{color:var(--yellow);}
+  .grade-badge{font-family:'Orbitron',monospace;font-size:1rem;padding:10px 30px;border-radius:50px;letter-spacing:3px;}
+  .grade-A{background:rgba(0,255,136,.15);border:1px solid var(--green);color:var(--green);}
+  .grade-B{background:rgba(10,127,232,.15);border:1px solid var(--blue);color:var(--blue);}
+  .grade-C{background:rgba(255,215,0,.15);border:1px solid var(--yellow);color:var(--yellow);}
+  .grade-D{background:rgba(255,45,85,.15);border:1px solid var(--red);color:var(--red);}
+  .btn-retry{font-family:'Orbitron',monospace;font-size:1rem;padding:14px 40px;background:linear-gradient(135deg,#00aa55,#0055aa);border:none;border-radius:50px;color:#fff;cursor:pointer;letter-spacing:2px;transition:all .2s;margin-top:8px;}
+  .btn-retry:hover{transform:scale(1.05);box-shadow:0 0 28px rgba(0,255,136,.4);}
+  .review-btn{font-family:'Orbitron',monospace;font-size:.85rem;padding:10px 28px;background:transparent;border:1px solid var(--border);border-radius:50px;color:var(--dim);cursor:pointer;letter-spacing:1px;transition:all .2s;}
+  .review-btn:hover{border-color:var(--blue);color:var(--text);}
+
+  /* Review list */
+  .review-wrap{width:100%;max-width:760px;display:none;}
+  .review-wrap.show{display:block;}
+  .review-item{background:var(--card);border-radius:12px;padding:16px;margin-bottom:12px;border-left:4px solid var(--green);}
+  .review-item.wrong-r{border-left-color:var(--red);}
+  .review-q{font-weight:700;font-size:.95rem;margin-bottom:8px;}
+  .review-ans{font-size:.85rem;color:var(--dim);}
+  .review-ans .correct-a{color:var(--green);}
+  .review-ans .wrong-a{color:var(--red);}
+
+  /* Particles */
+  .particle{position:fixed;pointer-events:none;border-radius:50%;z-index:999;}
+</style>
+</head>
+<body>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<!-- START -->
+<div class="screen active" id="startScreen">
+  <div style="max-width:640px;width:100%;">
+    <div class="logo">MCQ ARENA</div>
+    <div class="subtitle">Ultimate Knowledge Test</div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-num" id="totalQ">—</div><div class="stat-lbl">Questions</div></div>
+      <div class="stat-box"><div class="stat-num">4</div><div class="stat-lbl">Chapters</div></div>
+      <div class="stat-box"><div class="stat-num">30s</div><div class="stat-lbl">Per Question</div></div>
+    </div>
+    <div class="chapters" style="margin:0 auto 24px;">
+      <div class="chip">Ch.2 – IoT & 5G</div>
+      <div class="chip">Ch.3 – Blockchain</div>
+      <div class="chip">Ch.4 – Immersive & Quantum</div>
+      <div class="chip">Ch.5 – Digital Forensics</div>
+    </div>
+    <div style="text-align:center;">
+      <button class="btn-start" onclick="startTest()"><span>▶ START TEST</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- QUIZ -->
+<div class="screen" id="quizScreen">
+  <div class="quiz-wrap">
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="progressFill"></div></div>
+    <div class="quiz-header">
+      <div class="q-counter" id="qCounter">Q 1 / 100</div>
+      <div class="timer" id="timer">30s</div>
+      <div class="score-live">Score: <span id="liveScore">0</span></div>
+    </div>
+    <div class="q-card" id="qCard">
+      <div class="q-tag" id="qTag">Chapter</div>
+      <div class="q-text" id="qText"></div>
+    </div>
+    <div class="options" id="optionsWrap"></div>
+    <div class="feedback" id="feedback"></div>
+    <button class="btn-next" id="btnNext" onclick="nextQ()">NEXT</button>
+  </div>
+</div>
+
+<!-- RESULT -->
+<div class="screen" id="resultScreen">
+  <div class="result-title" id="resultTitle">TEST COMPLETE</div>
+  <div class="score-circle" id="scoreCircle">
+    <div class="score-circle-inner">
+      <div class="score-pct" id="scorePct">0%</div>
+      <div class="score-frac" id="scoreFrac">0/0</div>
+    </div>
+  </div>
+  <div class="grade-badge" id="gradeBadge">—</div>
+  <div class="result-stats">
+    <div class="r-stat correct-s"><div class="r-stat-n" id="rCorrect">0</div><div class="r-stat-l">Correct</div></div>
+    <div class="r-stat wrong-s"><div class="r-stat-n" id="rWrong">0</div><div class="r-stat-l">Wrong</div></div>
+    <div class="r-stat skip-s"><div class="r-stat-n" id="rSkip">0</div><div class="r-stat-l">Timed Out</div></div>
+  </div>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+    <button class="btn-retry" onclick="retryTest()">↺ RETRY TEST</button>
+    <button class="review-btn" onclick="toggleReview()">REVIEW ANSWERS</button>
+  </div>
+  <div class="review-wrap" id="reviewWrap"></div>
+</div>
+
+<script>
+const ALL_Q = [
+  // ── CHAPTER 2 – IoT & 5G ──
+  {ch:"Ch.2 – IoT & 5G",q:"Which key characteristic of 5G enables real-time applications like autonomous driving?",opts:["High power consumption","Ultra-low latency","Limited device connectivity","Low data rates"],ans:1},
+  {ch:"Ch.2 – IoT & 5G",q:"What is the typical peak data rate supported by 5G networks?",opts:["1 Gbps","10 Gbps","20 Gbps","100 Mbps"],ans:2},
+  {ch:"Ch.2 – IoT & 5G",q:"Which 5G feature supports up to 1 million devices per square kilometre?",opts:["Network slicing","Massive Machine-Type Communications (mMTC)","URLLC","Beamforming"],ans:1},
+  {ch:"Ch.2 – IoT & 5G",q:"IoT stands for ……",opts:["Internet of Technology","Intranet of Things","Internet of Things","Information of Things"],ans:2},
+  {ch:"Ch.2 – IoT & 5G",q:"What is the Internet of Things (IoT)?",opts:["Technology used only for smartphones","A network of interconnected physical devices that exchange data","A type of computer virus","A communication protocol for websites"],ans:1},
+  {ch:"Ch.2 – IoT & 5G",q:"Which IoT feature enables devices to operate without human involvement?",opts:["Automation","Virtualization","Encryption","Translation"],ans:0},
+  {ch:"Ch.2 – IoT & 5G",q:"Which communication technology is widely used in IoT?",opts:["HDMI","USB","Wi-Fi","VGA"],ans:2},
+  {ch:"Ch.2 – IoT & 5G",q:"Which of the following is a limitation of IoT?",opts:["High scalability","Security and privacy issues","Increased efficiency","Better data collection"],ans:1},
+  {ch:"Ch.2 – IoT & 5G",q:"Which component is essential in IoT devices?",opts:["Sensors and actuators","Chalk and board","Pen drive","Hard disk"],ans:0},
+  {ch:"Ch.2 – IoT & 5G",q:"Which layer in IoT architecture handles sensing and data collection?",opts:["Application layer","Network layer","Perception layer","Middleware layer"],ans:2},
+  {ch:"Ch.2 – IoT & 5G",q:"The network layer in IoT architecture is responsible for ……",opts:["Storing data only","Processing raw data","Transmitting data","Displaying output"],ans:2},
+  {ch:"Ch.2 – IoT & 5G",q:"Which protocol is used in IoT logical design for messaging?",opts:["MQTT","HDMI","VGA","FTP"],ans:0},
+  {ch:"Ch.2 – IoT & 5G",q:"A sensor is a device that ……",opts:["Performs physical action","Converts physical quantity into electrical signals","Stores data","Only transmits data"],ans:1},
+  {ch:"Ch.2 – IoT & 5G",q:"A PIR sensor is used to detect ……",opts:["Light","Pressure","Motion","Sound"],ans:2},
+  {ch:"Ch.2 – IoT & 5G",q:"Which sensor is used for measuring temperature?",opts:["LDR","Ultrasonic sensor","LM35","IR sensor"],ans:2},
+  {ch:"Ch.2 – IoT & 5G",q:"The MQ-2 sensor is used to detect ……",opts:["Motion","Gas","Water level","Pressure"],ans:1},
+  {ch:"Ch.2 – IoT & 5G",q:"Which actuator converts electrical energy into rotational motion?",opts:["Relay","DC motor","LDR","Thermistor"],ans:1},
+  {ch:"Ch.2 – IoT & 5G",q:"Which sensor is used for distance measurement in IoT?",opts:["Ultrasonic sensor","Thermistor","IR flame sensor","MQ-135"],ans:0},
+  {ch:"Ch.2 – IoT & 5G",q:"Which sensor is commonly used in smart homes for humidity and temperature?",opts:["LDR","DHT11","Load cell","Motion sensor"],ans:1},
+  {ch:"Ch.2 – IoT & 5G",q:"An actuator that allows switching of high-voltage devices is ……",opts:["Servo motor","Relay","LDR","IR sensor"],ans:1},
+  {ch:"Ch.2 – IoT & 5G",q:"Which sensor is used in smartphones for screen rotation?",opts:["Gyroscope","Gas sensor","PIR sensor","LDR"],ans:0},
+  {ch:"Ch.2 – IoT & 5G",q:"A buzzer in IoT acts as a ……",opts:["Sensor","Actuator","Controller","Storage device"],ans:1},
+  {ch:"Ch.2 – IoT & 5G",q:"Which cloud platform is widely used for IoT?",opts:["Adobe Photoshop","Microsoft Azure IoT Hub","VLC Media Player","GIMP"],ans:1},
+  {ch:"Ch.2 – IoT & 5G",q:"5G enables ultra-reliable communication also known as ……",opts:["URLLC","VoIP","FTP","SMS"],ans:0},
+  {ch:"Ch.2 – IoT & 5G",q:"Next Generation Network (NGN) is primarily based on ……",opts:["Circuit-switching","Packet-switched IP networks","Morse code","Analog communication"],ans:1},
+  // ── CHAPTER 3 – Blockchain ──
+  {ch:"Ch.3 – Blockchain",q:"Who invented blockchain technology?",opts:["Elon Musk","Satoshi Nakamoto","Vitalik Buterin","Tim Berners-Lee"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"What is a blockchain?",opts:["A centralized database","A decentralized digital ledger","A traditional banking system","A programming language"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"What is the first block in the blockchain called?",opts:["Prime block","Genesis block","Root block","Initial block"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"The blockchain ledger is ……",opts:["Mutable","Immutable","Partially mutable","Deleted regularly"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"Which feature allows all nodes to keep a copy of the blockchain?",opts:["Transparency","Decentralization","Anonymity","Centralization"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"What links a block to its previous block?",opts:["Timestamp","Previous block's hash","User ID","Transaction amount"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"Which system has a single point of failure?",opts:["Blockchain","Traditional centralized system","Peer-to-peer network","Decentralized system"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"Blockchain eliminates the need for ……",opts:["Cryptography","Intermediaries","Data storage","Recording transactions"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"Public blockchains are ……",opts:["Permissioned and private","Open to anyone","Operated by a single company","Always faster than private blockchains"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"Consortium blockchains are ……",opts:["Public blockchains","Governed by multiple organizations","Controlled by no one","Solely managed by governments"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"Smart contracts ……",opts:["Require a lawyer to enforce","Are self-executing contracts coded on blockchain","Can be changed anytime by creator","Need intermediaries"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"Bitcoin is ……",opts:["A centralized digital currency","A cryptocurrency operating on blockchain","A fiat currency","Not related to blockchain"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"Ethereum is known for ……",opts:["Only cryptocurrency transactions","Enabling smart contract execution","Being a private blockchain","Centralized control"],ans:1},
+  {ch:"Ch.3 – Blockchain",q:"What is a '51% attack'?",opts:["When a single user controls over half of all mining power","More than half network uses blockchain","Over half transactions are instant","None of the above"],ans:0},
+  {ch:"Ch.3 – Blockchain",q:"Which cryptographic function helps identify blocks uniquely?",opts:["Hash function","Digital signature","Public key","Private key"],ans:0},
+  {ch:"Ch.3 – Blockchain",q:"W
