@@ -408,6 +408,7 @@
     width: 100%;
     position: relative;
     overflow: hidden;
+    color: var(--white);
   }
 
   .option-btn::before {
@@ -442,6 +443,7 @@
     flex-shrink: 0;
     text-transform: uppercase;
     transition: all 0.25s ease;
+    color: var(--blue-glow);
   }
 
   .option-text {
@@ -518,14 +520,12 @@
     background: rgba(0,255,136,0.1);
     border: 1px solid var(--green-dim);
     color: var(--green);
-    display: flex;
   }
 
   .feedback-msg.wrong-msg {
     background: rgba(255,45,85,0.1);
     border: 1px solid var(--red-dim);
     color: var(--red);
-    display: flex;
   }
 
   .next-btn {
@@ -540,7 +540,6 @@
     letter-spacing: 2px;
     border-radius: 8px;
     cursor: pointer;
-    display: none;
     transition: all 0.3s ease;
     box-shadow: 0 0 20px rgba(13,110,253,0.3);
     width: 100%;
@@ -552,7 +551,6 @@
   }
 
   .next-btn.visible {
-    display: block;
     animation: fadeInUp 0.3s ease both;
   }
 
@@ -959,9 +957,11 @@ function loadQuestion() {
   const fb = document.getElementById('feedback-msg');
   fb.style.display = 'none';
   fb.className = 'feedback-msg';
-  fb.textContent = '';
+  fb.innerHTML = '';
 
-  document.getElementById('next-btn').className = 'next-btn';
+  const nb = document.getElementById('next-btn');
+  nb.style.display = 'none';
+  nb.className = 'next-btn';
 }
 
 function selectAnswer(chosen, correct) {
@@ -994,7 +994,8 @@ function selectAnswer(chosen, correct) {
   } else {
     wrongCount++;
     fb.className = 'feedback-msg wrong-msg';
-    fb.innerHTML = `❌ Wrong! The correct answer is: <strong style="margin-left:6px">${document.querySelector('[data-key="'+correct+'"] .option-text').textContent}</strong>`;
+    const correctText = document.querySelector('[data-key="'+correct+'"] .option-text');
+    fb.innerHTML = '❌ Wrong! Correct answer: <strong style="margin-left:6px">' + (correctText ? correctText.textContent : correct) + '</strong>';
     fb.style.display = 'flex';
     createBurst('red');
   }
@@ -1002,6 +1003,7 @@ function selectAnswer(chosen, correct) {
   document.getElementById('live-correct').textContent = correctCount;
   document.getElementById('live-wrong').textContent = wrongCount;
 
+  nextBtn.style.display = 'block';
   nextBtn.className = 'next-btn visible';
 
   // Last question
